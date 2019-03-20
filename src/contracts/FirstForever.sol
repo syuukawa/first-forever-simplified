@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;  // 版本要高于0.4.24才可以编译
+pragma solidity ^0.5.6;  // 版本等于 0.5.6
 
-contract SimpleStore {
+contract FirstForever {
     mapping (address => mapping (uint256 => string)) private records;
     /*
         mapping类型 理解为字典
@@ -22,18 +22,18 @@ contract SimpleStore {
     function getList()
     public // public是公共方法
     view // view 表示这个查询方法,不改变数据的状态
-    returns (uint256[])// 返回的数据类型
+    returns (uint256[] memory)// 返回的数据类型
     {
         return categories[msg.sender];
     }
 
-    function add(string text, uint256 time) public { // 公共方法, 外部可以调用
+    function addRecode(string memory text, uint256 time) public { // 公共方法, 外部可以调用
         records[msg.sender][time]=text; // 赋值
         _addToList(msg.sender, time); // 调用方法
         emit Recorded(msg.sender, text, time); // 触发事件
     }
 
-    function get(uint256 time) public view returns(string) { // 公共方法, 外部可以调用
+    function getRecode(uint256 time) public view returns(string memory) { // 公共方法, 外部可以调用
         return records[msg.sender][time];
     }
 }

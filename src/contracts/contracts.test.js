@@ -3,7 +3,7 @@ const { abi } = require('./compiled')
 const { contractAddress } = require('../config')
 const transaction = require('./transaction')
 
-const simpleStoreContract = new nervos.base.Contract(abi, contractAddress) // instantiate contract
+const foreverContract = new nervos.base.Contract(abi, contractAddress) // instantiate contract
 
 nervos.base.getBalance(nervos.base.accounts.wallet[0].address).then(console.log) // check balance of account
 console.log(`Interact with contract at ${contractAddress}`)
@@ -15,7 +15,7 @@ test(
   async () => {
     const current = await nervos.base.getBlockNumber()
     transaction.validUntilBlock = +current + 88 // update transaction.validUntilBlock
-    const txResult = await simpleStoreContract.methods.add(text, time).send(transaction) // sendTransaction to the contract
+    const txResult = await foreverContract.methods.add(text, time).send(transaction) // sendTransaction to the contract
     const receipt = await nervos.listeners.listenToTransactionReceipt(txResult.hash) // listen to the receipt
     expect(receipt.errorMessage).toBeNull()
   },
@@ -25,10 +25,10 @@ test(
 test(
   `Get record of (${text}, ${time})`,
   async () => {
-    const list = await simpleStoreContract.methods.getList().call({
+    const list = await foreverContract.methods.getList().call({
       from: transaction.from,
     }) // check list
-    const msg = await simpleStoreContract.methods.get(time).call({
+    const msg = await foreverContract.methods.get(time).call({
       from: transaction.from,
     }) // check message
     expect(+list[list.length - 1]).toBe(time)

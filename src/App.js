@@ -1,6 +1,6 @@
 import React from 'react'
 import './App.css'
-import { transaction, simpleStoreContract } from './simpleStore'
+import { transaction, foreverContract } from './foreverContract'
 import nervos from './nervos'
 
 const Submit = ({ text = '愿此刻永恒', onClick, disabled = false }) => (
@@ -20,7 +20,7 @@ const Record = ({ time, text, hasYearLabel }) => {
   return (
     <div className="list__record--container">
       {hasYearLabel ? <div className="list__record--year">{_time.getFullYear()}</div> : null}
-      <span>{`${_time.getMonth() + 1}-${timeFormatter(_time.getDate())} ${timeFormatter(_time.getHours())}:${timeFormatter(_time.getMinutes())}`}</span>
+      <span>{`${timeFormatter(_time.getMonth() + 1)}-${timeFormatter(_time.getDate())} ${timeFormatter(_time.getHours())}:${timeFormatter(_time.getMinutes())}`}</span>
       <div>{text}</div>
     </div>
   )
@@ -61,7 +61,7 @@ class App extends React.Component {
         this.setState({
           submitText: submitTexts.submitting,
         })
-        return simpleStoreContract.methods.add(text, +time).send(tx)
+        return foreverContract.methods.addRecode(text, +time).send(tx)
       })
       .then(res => {
         if (res.hash) {
@@ -87,7 +87,7 @@ class App extends React.Component {
   }
   fetchList() {
     const from = nervos.base.accounts.wallet[0] ? nervos.base.accounts.wallet[0].address : '';
-    simpleStoreContract.methods
+    foreverContract.methods
       .getList()
       .call({
         from,
@@ -95,7 +95,7 @@ class App extends React.Component {
       .then(times => {
         times.reverse()
         this.setState({ times })
-        return Promise.all(times.map(time => simpleStoreContract.methods.get(time).call({ from })))
+        return Promise.all(times.map(time => foreverContract.methods.getRecode(time).call({ from })))
       })
       .then(texts => {
         this.setState({ texts })
@@ -122,7 +122,7 @@ class App extends React.Component {
         <div className="add__time--container">
           <span className="add__time--year">{time.getFullYear()}</span>
           :
-          <span className="add__time--month">{time.getMonth() + 1}</span>
+          <span className="add__time--month">{timeFormatter(time.getMonth() + 1)}</span>
           :
           <span className="add__time--day">{timeFormatter(time.getDate())}</span>
           :
