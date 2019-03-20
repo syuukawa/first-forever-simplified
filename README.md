@@ -152,29 +152,30 @@ nervos.base.accounts.wallet.add(account)
 module.exports = nervos
 ```
 
-创建 nervos.js 文件，初始化 nervos 对象。通过使用 config.chain ，指定了要跟哪条区块链进行交互。privateKeyToAccount 用私钥生成 account。
+创建 nervos.js 文件，初始化 nervos 对象。通过使用 `config.chain`，指定了要跟哪条区块链进行交互。privateKeyToAccount 用私钥生成 account。
 通过 wallet.add 接口把 account 添加到了 nervos 对象中并最终导出。
 
-在文件夹`src/`下创建一个文件`simpleStore.js`，添加如下代码：
+在文件夹`src/`下创建一个文件`foreverContract.js`，添加如下代码：
 
 ```
 const nervos = require('./nervos')
 const {
-  abi
+  abi
 } = require('./contracts/compiled.js')
 const {
-  contractAddress
+  contractAddress
 } = require('./config')
 
 const transaction = require('./contracts/transaction')
-const simpleStoreContract = new nervos.base.Contract(abi, contractAddress)
+const foreverContract = new nervos.base.Contract(abi, contractAddress)
+
 module.exports = {
-  transaction,
-  simpleStoreContract
+  transaction,
+  foreverContract
 }
 ```
 
-打开网址 [https://remix.ethereum.org/](https://remix.ethereum.org/) 将下面的代码粘贴到remix的代码编辑区域中，代码也可以从这个网址得到：[https://github.com/NervosBeijingCommunity/first-forever-simplified/blob/master/src/contracts/SimpleStore.sol](https://github.com/NervosBeijingCommunity/first-forever-simplified/blob/master/src/contracts/SimpleStore.sol)
+打开网址 [https://remix.ethereum.org/](https://remix.ethereum.org/) 将下面的代码粘贴到remix的代码编辑区域中，代码也可以从这个网址得到：[https://github.com/NervosBeijingCommunity/first-forever-simplified/blob/master/src/contracts/FirstForever.sol](https://github.com/NervosBeijingCommunity/first-forever-simplified/blob/master/src/contracts/FirstForever.sol)
 
 **教练**：介绍一下智能合约和Solidity？Solidity有哪些优点更适合做智能合约开发？
 
@@ -182,9 +183,9 @@ module.exports = {
 [https://learning.nervos.org/nerv-first/4-sol](https://learning.nervos.org/nerv-first/4-sol)
 
 ```
-pragma solidity ^0.4.24; // 版本等于0.4.24才可以编译
+pragma solidity ^0.5.6;  // 版本等于 0.5.6
 
-contract SimpleStore {
+contract FirstForever {
     mapping (address => mapping (uint256 => string)) private records;
     /*
         mapping类型 理解为字典
@@ -206,18 +207,18 @@ contract SimpleStore {
     function getList()
     public // public是公共方法
     view // view 表示这个查询方法,不改变数据的状态
-    returns (uint256[])// 返回的数据类型
+    returns (uint256[] memory)// 返回的数据类型
     {
         return categories[msg.sender];
     }
 
-    function add(string text, uint256 time) public { // 公共方法, 外部可以调用
+    function addRecode(string memory text, uint256 time) public { // 公共方法, 外部可以调用
         records[msg.sender][time]=text; // 赋值
         _addToList(msg.sender, time); // 调用方法
         emit Recorded(msg.sender, text, time); // 触发事件
     }
 
-    function get(uint256 time) public view returns(string) { // 公共方法, 外部可以调用
+    function getRecode(uint256 time) public view returns(string memory) { // 公共方法, 外部可以调用
         return records[msg.sender][time];
     }
 }
@@ -355,9 +356,10 @@ module.exports = config
 
 ```
 // src/App.js
+
 import React from 'react'
 import './App.css'
-import { transaction, simpleStoreContract } from './simpleStore'
+import { transaction, foreverContract } from './foreverContract'
 import nervos from './nervos'
 
 const Submit = ({ text = '愿此刻永恒', onClick, disabled = false }) => (
@@ -377,7 +379,7 @@ const Record = ({ time, text, hasYearLabel }) => {
   return (
     <div className="list__record--container">
       {hasYearLabel ? <div className="list__record--year">{_time.getFullYear()}</div> : null}
-      <span>{`${_time.getMonth() + 1}-${timeFormatter(_time.getDate())} ${timeFormatter(_time.getHours())}:${timeFormatter(_time.getMinutes())}`}</span>
+      <span>{`${timeFormatter(_time.getMonth() + 1)}-${timeFormatter(_time.getDate())} ${timeFormatter(_time.getHours())}:${timeFormatter(_time.getMinutes())}`}</span>
       <div>{text}</div>
     </div>
   )
@@ -418,7 +420,7 @@ class App extends React.Component {
         this.setState({
           submitText: submitTexts.submitting,
         })
-        return simpleStoreContract.methods.add(text, +time).send(tx)
+        return foreverContract.methods.addRecode(text, +time).send(tx)
       })
       .then(res => {
         if (res.hash) {
@@ -444,7 +446,7 @@ class App extends React.Component {
   }
   fetchList() {
     const from = nervos.base.accounts.wallet[0] ? nervos.base.accounts.wallet[0].address : '';
-    simpleStoreContract.methods
+    foreverContract.methods
       .getList()
       .call({
         from,
@@ -452,7 +454,7 @@ class App extends React.Component {
       .then(times => {
         times.reverse()
         this.setState({ times })
-        return Promise.all(times.map(time => simpleStoreContract.methods.get(time).call({ from })))
+        return Promise.all(times.map(time => foreverContract.methods.getRecode(time).call({ from })))
       })
       .then(texts => {
         this.setState({ texts })
@@ -479,7 +481,7 @@ class App extends React.Component {
         <div className="add__time--container">
           <span className="add__time--year">{time.getFullYear()}</span>
           :
-          <span className="add__time--month">{time.getMonth() + 1}</span>
+          <span className="add__time--month">{timeFormatter(time.getMonth() + 1)}</span>
           :
           <span className="add__time--day">{timeFormatter(time.getDate())}</span>
           :
@@ -512,6 +514,7 @@ class App extends React.Component {
 }
 
 export default App
+
 ```
 
 清空`src/App.css`文件内容，并添加如下代码：
